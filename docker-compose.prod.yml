@@ -1,0 +1,155 @@
+# GHCR 默认命名空间与 CI 一致：GitHub 仓库 Owner 小写（见 .github/workflows/deploy.yml push tags）。
+# 以下镜像路径曾为文档示例（automata-bio），勿与阿里云 ACR 命名空间混淆；GHCR 上可能无此路径：
+#   ${ALIYUN_REGISTRY:-ghcr.io}/automata-bio/automata-frontend:${FRONTEND_IMAGE_TAG:-latest}
+#   ${ALIYUN_REGISTRY:-ghcr.io}/automata-bio/automata-backend:${BACKEND_IMAGE_TAG:-latest}
+services:
+  frontend:
+    # image: ${ALIYUN_REGISTRY:-ghcr.io}/automata-bio/automata-frontend:${FRONTEND_IMAGE_TAG:-latest}
+    image: ${ALIYUN_REGISTRY:-ghcr.io}/congwang3/automata-frontend:${FRONTEND_IMAGE_TAG:-latest}
+    container_name: automata-frontend
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${FRONTEND_HOST_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - automata-net
+
+  backend:
+    # image: ${ALIYUN_REGISTRY:-ghcr.io}/automata-bio/automata-backend:${BACKEND_IMAGE_TAG:-latest}
+    image: ${ALIYUN_REGISTRY:-ghcr.io}/congwang3/automata-backend:${BACKEND_IMAGE_TAG:-latest}
+    container_name: automata-backend
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    environment:
+      APP_ENV: production
+      TZ: ${TZ:-Asia/Shanghai}
+      REPO_ROOT: /app
+      AUTOMATA_REPO_ROOT: /app
+      # 默认不注入占位域名；由 .env.prod 的 DOWNLOAD_PUBLIC_BASE_URL 决定。留空则 API 返回同源相对路径。
+      DOWNLOAD_PUBLIC_BASE_URL: ${DOWNLOAD_PUBLIC_BASE_URL:-}
+      PYTHON_EXEC_PATH: ${PYTHON_EXEC_PATH:-python}
+      # 与 deploy/conda-r442.yml 的 R_442 一致（镜像内 micromamba 环境路径）
+      RSCRIPT_PATH: ${RSCRIPT_PATH:-/opt/conda/envs/R_442/bin/Rscript}
+      # org.Mm/Bt/Dm.eg.db 等非人类注释包按需下载，持久化到此目录（首次运行时安装，后续复用）
+      R_LIBS_USER: /opt/r_userlib
+      # STRINGdb 缓存目录（首次运行时下载物种数据文件，后续复用，避免重复联网）
+      AUTOMATA_STRINGDB_CACHE_DIR: /opt/stringdb_cache
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./data/uploaded_files:/app/uploaded_files
+      - ./data/logs:/app/logs
+      - ./data/agent_byok:/app/data/agent_byok
+      - ./data/download_data:/app/download_data
+      - ./data/example:/app/example:ro  # 挂载 example 目录，用于前端访问
+      # Release 解压或手工放置 gene_*/mrna_*/protein_* 到 ./data/reference_sql；.env.prod 设 REFERENCE_DATA_SQL_DIR=/app/reference_sql
+      - ./data/reference_sql:/app/reference_sql:ro
+      # 持久化 R 包（org.Mm/Bt/Dm.eg.db 等，首次按需下载后长期保留）
+      - ./data/r_library:/opt/r_userlib
+      # 持久化 STRINGdb 缓存（protein.links 等数据文件）
+      - ./data/stringdb_cache:/opt/stringdb_cache
+    ports:
+      - "127.0.0.1:${BACKEND_HOST_PORT:-18005}:8005"
+    # # 使用 Docker 启动脚本：自动检测 MySQL 用户（幂等），然后启动 uvicorn
+    # command: ["bash", "/app/start_docker.sh"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8005/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - automata-net
+
+  download-server:
+    # image: ${ALIYUN_REGISTRY:-ghcr.io}/automata-bio/automata-backend:${BACKEND_IMAGE_TAG:-latest}
+    image: ${ALIYUN_REGISTRY:-ghcr.io}/congwang3/automata-backend:${BACKEND_IMAGE_TAG:-latest}
+    container_name: automata-download-server
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    environment:
+      APP_ENV: production
+      TZ: ${TZ:-Asia/Shanghai}
+      REPO_ROOT: /app
+      PYTHON_EXEC_PATH: ${PYTHON_EXEC_PATH:-python}
+      # 与 deploy/conda-r442.yml 的 R_442 一致（镜像内 micromamba 环境路径）
+      RSCRIPT_PATH: ${RSCRIPT_PATH:-/opt/conda/envs/R_442/bin/Rscript}
+    command: ["python", "download_server.py"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./data/download_data:/app/download_data
+      - ./data/uploaded_files:/app/uploaded_files
+      - ./data/example:/app/example:ro  # 挂载 example 目录，用于前端访问
+    ports:
+      - "127.0.0.1:${DOWNLOAD_HOST_PORT:-18001}:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - automata-net
+
+  mysql:
+    image: mysql:8.0
+    container_name: automata-mysql
+    restart: unless-stopped
+    # 与 backend 共用 .env.prod；勿在此处写 ${MYSQL_ROOT_PASSWORD}，否则未 --env-file 时会把 env_file 中的值覆盖为空
+    env_file:
+      - .env.prod
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    command: ["mysqld", "--default-authentication-plugin=mysql_native_password"]
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    # $$ 在 compose 中变为 $，由容器内 shell 读取 MYSQL_ROOT_PASSWORD（来自 env_file）
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - automata-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: automata-redis
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+    networks:
+      - automata-net
+
+networks:
+  automata-net:
+    driver: bridge

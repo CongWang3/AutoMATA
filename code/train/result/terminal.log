@@ -1,0 +1,61 @@
+model = CNN
+kfold = 0
+ratio = 0
+epochs = 10
+earlystopping = 10
+learning rate = 0.01
+batch size = 32
+loss function = crossentropy
+optimizer function = adam
+label number = 2
+random seed = 42
+regularization method = none
+regularization weight = 0.0
+dropout rate = 0.0
+feature selection method = CHI2
+selected feature number:  [2 3]
+--------Begin the 1 epoch training---------
+train loss = 0.705, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333 
+validation loss = 1.4489, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333
+Validation loss decreased (inf --> 1.448853).  Saving model ...
+--------Begin the 2 epoch training---------
+train loss = 1.4489, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333
+validation loss = 0.8149, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333
+Validation loss decreased (1.448853 --> 0.814916).  Saving model ...
+--------Begin the 3 epoch training---------
+train loss = 0.8149, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333
+validation loss = 0.6525, acc = 1.0, precision = 1.0, recall = 1.0, f1 = 1.0
+Validation loss decreased (0.814916 --> 0.652528).  Saving model ...
+--------Begin the 4 epoch training---------
+train loss = 0.6525, acc = 1.0, precision = 1.0, recall = 1.0, f1 = 1.0
+validation loss = 0.7271, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333
+EarlyStopping counter: 1 out of 10
+--------Begin the 5 epoch training---------
+train loss = 0.7271, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333 
+validation loss = 0.6984, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333
+EarlyStopping counter: 2 out of 10
+--------Begin the 6 epoch training---------
+train loss = 0.6984, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333
+validation loss = 0.6298, acc = 1.0, precision = 1.0, recall = 1.0, f1 = 1.0
+Validation loss decreased (0.652528 --> 0.629825).  Saving model ...
+--------Begin the 7 epoch training---------
+train loss = 0.6298, acc = 1.0, precision = 1.0, recall = 1.0, f1 = 1.0
+validation loss = 0.6229, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333
+Validation loss decreased (0.629825 --> 0.622865).  Saving model ...
+--------Begin the 8 epoch training---------
+train loss = 0.6229, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333 
+--------Begin the 8 epoch training---------
+train loss = 0.6229, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333
+train loss = 0.6229, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333
+validation loss = 0.6482, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333
+EarlyStopping counter: 1 out of 10
+--------Begin the 9 epoch training---------
+train loss = 0.6482, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333
+validation loss = 0.638, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333
+EarlyStopping counter: 2 out of 10
+--------Begin the 10 epoch training---------
+train loss = 0.638, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333
+validation loss = 0.5994, acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333
+Validation loss decreased (0.622865 --> 0.599412).  Saving model ...
+Done!
+test acc = 0.5, precision = 0.25, recall = 0.5, f1 = 0.3333333333333333
