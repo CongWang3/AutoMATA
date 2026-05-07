@@ -2,7 +2,9 @@
 
 **AutoMATA: a deep learning-enhanced bioinformatics platform for multi-omics data processing, exploration and modelling**
 
+**Platform Introduction and User Guide Video**
 
+visit website: [bilibili](https://www.bilibili.com/video/BV1LDdAB3EXi/?vd_source=057f1ccccc12750f57f6d28b9c852bbdhttps://www.bilibili.com/video/BV1LDdAB3EXi/?vd_source=057f1ccccc12750f57f6d28b9c852bbd) or [YouTube](https://youtu.be/5EFewqRPKoc)
 
 ## Platform Docker Usage
 
