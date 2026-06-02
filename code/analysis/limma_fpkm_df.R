@@ -64,9 +64,12 @@ group_info <- group_info[match(common_samples, group_info$Sample), , drop = FALS
 fpkm[] <- lapply(fpkm, function(x) as.numeric(as.character(x)))
 
 
+# Delete genes with an expression level of 0 (keep log_fpkm and fpkm consistent)
+keep_gene <- which(rowSums(fpkm) != 0)
+fpkm <- fpkm[keep_gene, , drop = FALSE]
+
 # Empty value processing KNN imputation
 if(any(is.na(fpkm))) {
-  # KNN imputation
   cat("begin KNN imputation\n")
   library(impute)
   fpkm <- impute.knn(as.matrix(fpkm))$data
@@ -74,11 +77,6 @@ if(any(is.na(fpkm))) {
 
 log_fpkm <- log2(fpkm + 1) #log process
 log_fpkm[log_fpkm == -Inf] = 0 # Replace the logged negative infinity value with 0
-
-# Delete genes with an expression level of 0 (keep log_fpkm and fpkm consistent)
-keep_gene <- which(rowSums(fpkm) != 0)
-fpkm <- fpkm[keep_gene, , drop = FALSE]
-log_fpkm <- log_fpkm[keep_gene, , drop = FALSE]
 
 # construct design matrix
 groups <- factor(group_info$Group, levels = c("Control", "Treatment"))
